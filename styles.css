@@ -1,0 +1,800 @@
+/* ==========================================================================
+   TypeGuard Stylesheet
+   Modern, Clean, Typing-Only Notepad
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   CSS Variables & Design Tokens
+   -------------------------------------------------------------------------- */
+:root {
+  /* Light Theme (Default) */
+  --bg-primary: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-subtle: #f1f5f9;
+  --bg-muted: #e2e8f0;
+  
+  --border-light: #e2e8f0;
+  --border-subtle: #cbd5e1;
+  --border-focus: #3b82f6;
+
+  --text-main: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --text-placeholder: #94a3b8;
+
+  --primary-color: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-subtle: #eff6ff;
+  --primary-text: #ffffff;
+
+  --danger-color: #ef4444;
+  --danger-hover: #dc2626;
+  --danger-subtle: #fef2f2;
+  --danger-border: #fecaca;
+  --danger-text: #991b1b;
+
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.08);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --transition-fast: 150ms ease;
+  --transition-normal: 220ms ease;
+}
+
+/* Dark Theme Variables */
+[data-theme="dark"] {
+  --bg-primary: #090d16;
+  --bg-surface: #111827;
+  --bg-subtle: #1f2937;
+  --bg-muted: #374151;
+
+  --border-light: #1f2937;
+  --border-subtle: #374151;
+  --border-focus: #60a5fa;
+
+  --text-main: #f3f4f6;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+  --text-placeholder: #4b5563;
+
+  --primary-color: #3b82f6;
+  --primary-hover: #2563eb;
+  --primary-subtle: #1e293b;
+  --primary-text: #ffffff;
+
+  --danger-color: #ef4444;
+  --danger-hover: #dc2626;
+  --danger-subtle: #311414;
+  --danger-border: #7f1d1d;
+  --danger-text: #fca5a5;
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.5);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.6), 0 4px 6px -4px rgb(0 0 0 / 0.6);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.7), 0 8px 10px -6px rgb(0 0 0 / 0.7);
+}
+
+/* --------------------------------------------------------------------------
+   Reset & Base Styles
+   -------------------------------------------------------------------------- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color var(--transition-normal), color var(--transition-normal);
+  overflow-x: hidden;
+}
+
+button, input, textarea {
+  font-family: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  outline: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   App Layout
+   -------------------------------------------------------------------------- */
+.app-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --------------------------------------------------------------------------
+   Top Navigation Bar
+   -------------------------------------------------------------------------- */
+.top-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-light);
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--shadow-sm);
+  transition: background-color var(--transition-normal), border-color var(--transition-normal);
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  user-select: none;
+}
+
+.logo-icon-wrapper {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
+}
+
+.brand-text {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.brand-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+}
+
+.brand-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-full);
+  background-color: var(--primary-subtle);
+  color: var(--primary-color);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Button Variants */
+.nav-btn {
+  padding: 0.5rem 0.85rem;
+  font-size: 0.875rem;
+  border-radius: var(--radius-md);
+  line-height: 1;
+}
+
+.btn-secondary {
+  background-color: var(--bg-subtle);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-light);
+}
+
+.btn-secondary:hover {
+  background-color: var(--bg-muted);
+  color: var(--text-main);
+  border-color: var(--border-subtle);
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: var(--primary-text);
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.25);
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  box-shadow: 0 2px 5px rgba(37, 99, 235, 0.35);
+}
+
+.btn-danger {
+  background-color: var(--danger-color);
+  color: #ffffff;
+}
+
+.btn-danger:hover {
+  background-color: var(--danger-hover);
+}
+
+.navbar-divider {
+  width: 1px;
+  height: 24px;
+  background-color: var(--border-light);
+  margin: 0 0.25rem;
+}
+
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  background-color: transparent;
+  border: 1px solid transparent;
+}
+
+.icon-btn:hover {
+  background-color: var(--bg-subtle);
+  color: var(--text-main);
+  border-color: var(--border-light);
+}
+
+/* Theme Icon Toggle */
+[data-theme="dark"] .sun-icon {
+  display: block;
+}
+[data-theme="dark"] .moon-icon {
+  display: none;
+}
+:root:not([data-theme="dark"]) .sun-icon {
+  display: none;
+}
+:root:not([data-theme="dark"]) .moon-icon {
+  display: block;
+}
+
+/* --------------------------------------------------------------------------
+   Main Content & Editor Wrapper
+   -------------------------------------------------------------------------- */
+.main-editor-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  max-width: 980px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.editor-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 0.75rem;
+}
+
+/* Editor Meta Bar: Document Title & Save Status */
+.editor-meta-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.25rem 0.25rem;
+}
+
+.title-input-container {
+  flex: 1;
+  max-width: 500px;
+}
+
+.note-title-input {
+  width: 100%;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text-main);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.5rem;
+  transition: all var(--transition-fast);
+}
+
+.note-title-input:hover {
+  border-color: var(--border-light);
+  background-color: var(--bg-surface);
+}
+
+.note-title-input:focus {
+  background-color: var(--bg-surface);
+  border-color: var(--border-focus);
+}
+
+.note-title-input::placeholder {
+  color: var(--text-placeholder);
+  font-weight: 400;
+}
+
+/* Save Status Indicator */
+.save-status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  user-select: none;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  transition: background-color var(--transition-fast);
+}
+
+.status-saved {
+  background-color: var(--success-color);
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.4);
+}
+
+.status-typing {
+  background-color: var(--warning-color);
+  animation: pulse-dot 1.2s infinite ease-in-out;
+}
+
+.status-saving {
+  background-color: var(--primary-color);
+}
+
+@keyframes pulse-dot {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  50% { transform: scale(1.25); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.7; }
+}
+
+/* --------------------------------------------------------------------------
+   Textarea Card & Editor
+   -------------------------------------------------------------------------- */
+.textarea-card {
+  position: relative;
+  flex: 1;
+  min-height: 480px;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  overflow: hidden;
+}
+
+.textarea-card:focus-within {
+  border-color: var(--border-subtle);
+  box-shadow: var(--shadow-md);
+}
+
+.notepad-editor {
+  flex: 1;
+  width: 100%;
+  min-height: 480px;
+  padding: 1.75rem 2rem;
+  border: none;
+  outline: none;
+  resize: none;
+  background: transparent;
+  color: var(--text-main);
+  font-size: 1.05rem;
+  line-height: 1.75;
+  letter-spacing: -0.01em;
+  font-family: var(--font-sans);
+}
+
+.notepad-editor::placeholder {
+  color: var(--text-placeholder);
+  font-style: normal;
+}
+
+/* Custom Scrollbar for Textarea */
+.notepad-editor::-webkit-scrollbar {
+  width: 8px;
+}
+.notepad-editor::-webkit-scrollbar-track {
+  background: transparent;
+}
+.notepad-editor::-webkit-scrollbar-thumb {
+  background-color: var(--border-subtle);
+  border-radius: 4px;
+}
+.notepad-editor::-webkit-scrollbar-thumb:hover {
+  background-color: var(--text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   Non-Intrusive Floating Paste Warning Toast
+   -------------------------------------------------------------------------- */
+.paste-toast {
+  position: absolute;
+  bottom: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background-color: var(--danger-subtle);
+  border: 1px solid var(--danger-border);
+  color: var(--danger-text);
+  padding: 0.65rem 1rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 20;
+  max-width: 90%;
+  width: max-content;
+}
+
+.paste-toast.show {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+.toast-content {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.875rem;
+}
+
+.toast-icon {
+  color: var(--danger-color);
+  flex-shrink: 0;
+}
+
+.toast-message strong {
+  font-weight: 600;
+}
+
+.toast-close-btn {
+  font-size: 1.25rem;
+  line-height: 1;
+  color: var(--danger-text);
+  opacity: 0.6;
+  padding: 0 0.25rem;
+}
+
+.toast-close-btn:hover {
+  opacity: 1;
+}
+
+/* --------------------------------------------------------------------------
+   Editor Footer Bar (Word count, stats)
+   -------------------------------------------------------------------------- */
+.editor-footer-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.footer-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.stat-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-number {
+  font-weight: 600;
+  color: var(--text-main);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+}
+
+.stat-label {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.stat-separator {
+  color: var(--border-subtle);
+  user-select: none;
+}
+
+.footer-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.text-link-btn {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.text-link-btn:hover {
+  color: var(--primary-color);
+  background-color: var(--primary-subtle);
+}
+
+/* --------------------------------------------------------------------------
+   Modals (Dialogs for New Note, Clear, Info)
+   -------------------------------------------------------------------------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background-color: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  opacity: 1;
+  transition: opacity var(--transition-fast);
+}
+
+.modal-overlay[hidden] {
+  display: none;
+  opacity: 0;
+}
+
+.modal-dialog {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  max-width: 440px;
+  width: 100%;
+  padding: 1.5rem;
+  animation: modal-pop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-info-dialog {
+  max-width: 540px;
+}
+
+@keyframes modal-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.modal-icon-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background-color: var(--danger-subtle);
+  color: var(--danger-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.modal-icon-badge.info-badge {
+  background-color: var(--primary-subtle);
+  color: var(--primary-color);
+}
+
+.modal-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text-main);
+  letter-spacing: -0.01em;
+}
+
+.modal-body {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.info-modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.info-section h3 {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 0.35rem;
+}
+
+.info-section p {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.protection-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.protection-list code {
+  background-color: var(--bg-subtle);
+  padding: 0.15rem 0.35rem;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  border: 1px solid var(--border-light);
+}
+
+.callout-section {
+  background-color: var(--bg-subtle);
+  border-left: 3px solid var(--primary-color);
+  padding: 0.75rem 1rem;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.callout-section h3 {
+  color: var(--primary-color);
+}
+
+.modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.65rem;
+}
+
+.modal-btn {
+  padding: 0.55rem 1.1rem;
+  font-size: 0.875rem;
+  border-radius: var(--radius-md);
+}
+
+/* --------------------------------------------------------------------------
+   Responsive Design
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .top-navbar {
+    padding: 0.65rem 1rem;
+  }
+
+  .brand-badge {
+    display: none;
+  }
+
+  .nav-btn span {
+    display: none;
+  }
+
+  .nav-btn {
+    padding: 0.5rem;
+  }
+
+  .main-editor-container {
+    padding: 0.85rem;
+  }
+
+  .notepad-editor {
+    padding: 1.25rem 1.1rem;
+    font-size: 1rem;
+    min-height: 380px;
+  }
+
+  .textarea-card {
+    min-height: 380px;
+  }
+
+  .editor-footer-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.65rem;
+  }
+
+  .footer-tools {
+    width: 100%;
+    justify-content: flex-end;
+    border-top: 1px solid var(--border-light);
+    padding-top: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .brand-title {
+    font-size: 1rem;
+  }
+
+  .logo-icon-wrapper {
+    width: 30px;
+    height: 30px;
+  }
+
+  .logo-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .note-title-input {
+    font-size: 1rem;
+  }
+
+  .footer-stats {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+}
