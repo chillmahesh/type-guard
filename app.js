@@ -53,8 +53,11 @@
   let toastTimeout = null;
   let pendingModalAction = null;
 
+  // In-memory internal clipboard (only stores text copied within TypeGuard, not persisted)
+  let internalClipboard = null;
+
   // -------------------------------------------------------------------------
-  // 1. Core Paste & Injection Prevention (Typing-Only Enforcement)
+  // 1. Core Paste & Internal Clipboard Protection
   // -------------------------------------------------------------------------
 
   /**
@@ -66,16 +69,9 @@
       clearTimeout(toastTimeout);
     }
 
-    if (customMsg) {
-      const msgEl = pasteToast.querySelector('.toast-message');
-      if (msgEl) {
-        msgEl.innerHTML = customMsg;
-      }
-    } else {
-      const msgEl = pasteToast.querySelector('.toast-message');
-      if (msgEl) {
-        msgEl.innerHTML = '<strong>Pasting is disabled.</strong> Please type your text manually.';
-      }
+    const msgEl = pasteToast.querySelector('.toast-message');
+    if (msgEl) {
+      msgEl.innerHTML = customMsg || '<strong>External pasting is disabled.</strong> Copy and paste within TypeGuard instead.';
     }
 
     pasteToast.classList.add('show');
@@ -93,11 +89,111 @@
     }
   }
 
-  // Intercept standard Paste event on the editor
+  /**
+   * Inserts verified internal clipboard text at cursor or replaces selection.
+   * Leverages document.execCommand('insertText') to preserve browser undo/redo history.
+   * @param {string} text - The verified internal text to insert
+   */
+  function insertInternalText(text) {
+    if (!text) return;
+    editor.focus();
+
+    let inserted = false;
+    try {
+      inserted = document.execCommand('insertText', false, text);
+    } catch (_) {
+      inserted = false;
+    }
+
+    if (!inserted) {
+      const start = editor.selectionStart;
+      const end = editor.selectionEnd;
+      editor.setRangeText(text, start, end, 'end');
+      editor.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  }
+
+  // Intercept Copy inside the editor to record internal clipboard
+  editor.addEventListener('copy', (e) => {
+    const start = editor.selectionStart;
+    const end = editor.selectionEnd;
+    const selectedText = editor.value.substring(start, end);
+
+    if (selectedText) {
+      internalClipboard = {
+        text: selectedText,
+        timestamp: Date.now()
+      };
+
+      if (e.clipboardData) {
+        e.clipboardData.setData('text/plain', selectedText);
+        try {
+          e.clipboardData.setData('application/x-typeguard', 'internal');
+        } catch (_) {}
+        e.preventDefault();
+      }
+    }
+  });
+
+  // Intercept Cut inside the editor
+  editor.addEventListener('cut', (e) => {
+    const start = editor.selectionStart;
+    const end = editor.selectionEnd;
+    const selectedText = editor.value.substring(start, end);
+
+    if (selectedText) {
+      internalClipboard = {
+        text: selectedText,
+        timestamp: Date.now()
+      };
+
+      if (e.clipboardData) {
+        e.clipboardData.setData('text/plain', selectedText);
+        try {
+          e.clipboardData.setData('application/x-typeguard', 'internal');
+        } catch (_) {}
+        e.preventDefault();
+
+        // Delete selection while preserving undo history
+        if (!document.execCommand('delete')) {
+          editor.setRangeText('', start, end, 'end');
+          editor.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      }
+    }
+  });
+
+  // Intercept Paste events (Ctrl+V, Cmd+V, Shift+Insert, context menu paste)
   editor.addEventListener('paste', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    showPasteToast();
+
+    // 1. Must have an active internal clipboard copy
+    if (!internalClipboard || !internalClipboard.text) {
+      showPasteToast('<strong>External pasting is disabled.</strong> Copy and paste within TypeGuard instead.');
+      return;
+    }
+
+    // 2. Read clipboard data from the paste event
+    let clipboardText = null;
+    let isTypeGuardInternal = false;
+
+    if (e.clipboardData) {
+      try {
+        clipboardText = e.clipboardData.getData('text/plain');
+        isTypeGuardInternal = e.clipboardData.getData('application/x-typeguard') === 'internal';
+      } catch (_) {}
+    }
+
+    // 3. Invalidate if system clipboard holds external text that does not match internal copy
+    if (clipboardText && !isTypeGuardInternal && clipboardText !== internalClipboard.text) {
+      internalClipboard = null;
+      showPasteToast('<strong>External pasting is disabled.</strong> Copy and paste within TypeGuard instead.');
+      return;
+    }
+
+    // 4. Approved internal paste
+    insertInternalText(internalClipboard.text);
   });
 
   // Intercept standard Drag & Drop text insertion
@@ -109,11 +205,10 @@
   editor.addEventListener('drop', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    showPasteToast('<strong>Drop is disabled.</strong> Dragging text into the editor is not allowed.');
+    showPasteToast('<strong>External pasting is disabled.</strong> Copy and paste within TypeGuard instead.');
   });
 
   // Intercept modern beforeinput event for clipboard / drop input types
-  // Catches mobile keyboards (Gboard, iOS clipboard, etc.)
   editor.addEventListener('beforeinput', (e) => {
     const inputType = e.inputType || '';
     if (
@@ -122,45 +217,25 @@
       inputType === 'insertFromDrop' ||
       inputType === 'insertFromYank'
     ) {
+      // The paste/drop event listener handles verification and insertion
       e.preventDefault();
       e.stopPropagation();
-      showPasteToast();
     }
   });
 
-  // Intercept keyboard shortcuts for paste & cut
+  // Keydown listener for shortcuts
   editor.addEventListener('keydown', (e) => {
     const isCtrlOrCmd = e.ctrlKey || e.metaKey;
     const key = e.key ? e.key.toLowerCase() : '';
 
-    // Block Ctrl+V / Cmd+V and Ctrl+Shift+V
-    if (isCtrlOrCmd && key === 'v') {
-      e.preventDefault();
-      e.stopPropagation();
-      showPasteToast();
-      return;
-    }
-
-    // Block Shift+Insert (Standard Windows clipboard paste shortcut)
-    if (e.shiftKey && (e.key === 'Insert' || e.code === 'Insert')) {
-      e.preventDefault();
-      e.stopPropagation();
-      showPasteToast();
-      return;
-    }
-
-    // Intercept Cut (Ctrl+X / Cmd+X) to protect against accidental text loss
-    // since user won't be able to paste it back!
-    if (isCtrlOrCmd && key === 'x') {
+    // Fast capture of copy in case browser suppresses copy event
+    if (isCtrlOrCmd && key === 'c') {
       const selectedText = editor.value.substring(editor.selectionStart, editor.selectionEnd);
-      if (selectedText.length > 0) {
-        // Copy to clipboard first so text isn't lost
-        try {
-          navigator.clipboard.writeText(selectedText);
-        } catch (_) {}
-        // Don't cut, warn user
-        e.preventDefault();
-        showPasteToast('<strong>Cut is prevented.</strong> Text copied to clipboard instead, as pasting is disabled.');
+      if (selectedText) {
+        internalClipboard = {
+          text: selectedText,
+          timestamp: Date.now()
+        };
       }
     }
   });
@@ -349,6 +424,7 @@
         () => {
           editor.value = '';
           noteTitleInput.value = 'Untitled Note';
+          internalClipboard = null;
           saveNote();
           updateStats();
           editor.focus();
@@ -357,6 +433,7 @@
     } else {
       editor.value = '';
       noteTitleInput.value = 'Untitled Note';
+      internalClipboard = null;
       saveNote();
       updateStats();
       editor.focus();
@@ -372,6 +449,7 @@
         'Clear Note',
         () => {
           editor.value = '';
+          internalClipboard = null;
           saveNote();
           updateStats();
           editor.focus();
@@ -413,6 +491,11 @@
       showPasteToast('<strong>Note is empty.</strong> Type some text first to copy.');
       return;
     }
+
+    internalClipboard = {
+      text: text,
+      timestamp: Date.now()
+    };
 
     navigator.clipboard.writeText(text).then(() => {
       const originalText = btnCopyAll.querySelector('span').textContent;
